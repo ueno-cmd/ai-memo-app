@@ -15,9 +15,19 @@ export async function onRequestGet(context) {
     // D1接続テスト
     if (env.DB) {
       try {
-        const result = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' LIMIT 1").first();
+        // 全テーブル一覧
+        const tables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all();
         debugInfo.dbConnection = 'success';
-        debugInfo.firstTable = result?.name || 'no tables';
+        debugInfo.allTables = tables.results.map(t => t.name);
+        
+        // ユーザーテーブル確認
+        const userCount = await env.DB.prepare("SELECT COUNT(*) as count FROM users").first();
+        debugInfo.userCount = userCount?.count || 0;
+        
+        // フォルダテーブル確認  
+        const folderCount = await env.DB.prepare("SELECT COUNT(*) as count FROM folders").first();
+        debugInfo.folderCount = folderCount?.count || 0;
+        
       } catch (error) {
         debugInfo.dbConnection = 'failed';
         debugInfo.dbError = error.message;
